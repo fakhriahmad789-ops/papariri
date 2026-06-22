@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ada Pesan Buat Kamu ❤️</title>
+    <style>
+        /* CSS untuk mempercantik tampilan */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ffe6e6, #ffb3b3);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        .card {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 40px 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(8px);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h1 {
+            color: #ff4d6d;
+            font-size: 26px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #555;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+
+        .btn-container {
+            margin-top: 30px;
+            position: relative;
+            height: 60px;
+        }
+
+        button {
+            padding: 12px 28px;
+            font-size: 16px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        #yesBtn {
+            background-color: #ff4d6d;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 77, 109, 0.4);
+        }
+
+        #yesBtn:hover {
+            transform: scale(1.1);
+        }
+
+        #noBtn {
+            background-color: #858585;
+            color: white;
+            position: absolute;
+            transition: all 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>Halo Sayang... ✨</h1>
+        <p id="text-box">Aku mau nanya sesuatu jujur ya... <br>Kamu sayang gak sih sama aku?</p>
+        
+        <div class="btn-container">
+            <button id="yesBtn" onclick="kamuSayang()">Sayang Banget! ❤️</button>
+            <button id="noBtn" onmouseover="tombolKabur()">Nggk 😜</button>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript untuk logika interaktif
+        function tombolKabur() {
+            const noBtn = document.getElementById('noBtn');
+            
+            // Mengacak posisi tombol "No" di dalam area layar browser
+            const x = Math.random() * (window.innerWidth - noBtn.offsetWidth - 40);
+            const y = Math.random() * (window.innerHeight - noBtn.offsetHeight - 40);
+            
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = x + 'px';
+            noBtn.style.top = y + 'px';
+        }
+
+        function kamuSayang() {
+            alert('Yeeeey! Aku juga sayang banget sama kamu! 🥰');
+            
+            // Otomatis chat ke WhatsApp kamu (Ganti nomor di bawah ini)
+            const nomorWA = "6285782509831"; // PENTING: Gunakan kode negara, misal 628...
+            const pesan = encodeURIComponent("Aku udah buka webnya, aku sayang banget sama kamu juga! ❤️✨");
+            window.location.href = `https://wa.me/${nomorWA}?text=${pesan}`;
+        }
+    </script>
+
+</body>
+</html>
