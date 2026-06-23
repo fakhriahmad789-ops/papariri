@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Calculator 3000 💖</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fff1f2, #ffe4e6);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .calculator-card {
+            background: white;
+            padding: 35px 25px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(225, 29, 72, 0.15);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            z-index: 10;
+            transition: all 0.5s ease;
+        }
+
+        h2 {
+            color: #e11d48;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .input-group {
+            text-align: left;
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            color: #334155;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #fda4af;
+            background-color: #fff5f5;
+        }
+
+        /* Styling khusus untuk input yang dikunci */
+        input[readonly] {
+            background-color: #f1f5f9;
+            color: #64748b;
+            cursor: not-allowed;
+            border-style: dashed;
+        }
+
+        .calc-btn {
+            width: 100%;
+            background: linear-gradient(45deg, #e11d48, #be123c);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(225, 29, 72, 0.3);
+            transition: all 0.2s;
+        }
+
+        .calc-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(225, 29, 72, 0.4);
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-number {
+            font-size: 64px;
+            font-weight: 800;
+            color: #e11d48;
+            margin: 20px 0 10px 0;
+            text-shadow: 0 4px 10px rgba(225, 29, 72, 0.2);
+        }
+
+        .result-message {
+            color: #334155;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            font-weight: 500;
+        }
+
+        .heart-particle {
+            position: absolute;
+            color: #f43f5e;
+            pointer-events: none;
+            animation: floatUp 3s linear forwards;
+            z-index: 1;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(100vh) scale(0); opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="calculator-card" id="mainCard">
+        <!-- TAMPILAN FORM INPUT -->
+        <div id="formInterface">
+            <h2>Love Calculator 💖</h2>
+            <p class="subtitle">Cek seberapa cocok KITA!</p>
+            
+            <div class="input-group">
+                <label>Nama Kamu:</label>
+                <input type="text" id="name1" placeholder="Ketik nama kamu...">
+            </div>
+            
+            <div class="input-group">
+                <label>Nama aku:</label>
+                <!-- PENTING: Ganti tulisan 'Nama Ganteng Kamu' di bawah ini dengan nama asli kamu ya! -->
+                <input type="text" id="name2" value="elpariri" readonly>
+            </div>
+            
+            <button class="calc-btn" onclick="mulaiHitung()">Hitung Kecocokan ✨</button>
+        </div>
+
+        <!-- TAMPILAN LOADING & HASIL AKHIR -->
+        <div class="result-section" id="resultInterface">
+            <h2>Hasil Analisis Alkemis Cinta 🔮</h2>
+            <div class="result-number" id="scoreDisplay">0%</div>
+            <p class="result-message" id="msgDisplay">Sedang menghitung getaran asmara...</p>
+            <button class="calc-btn" id="waBtn" style="display: none;" onclick="kirimHasil()">Lapor ke Pacar Kamu 🦖❤️</button>
+        </div>
+    </div>
+
+    <script>
+        const nomorWA = "6285782509831"; // UBAH NOMOR WHATSAPP KAMU DI SINI
+
+        function mulaiHitung() {
+            const n1 = document.getElementById('name1').value.trim();
+            const n2 = document.getElementById('name2').value.trim();
+
+            if (n1 === "") {
+                alert("Isi nama kamu dulu dong cantik! 😜");
+                return;
+            }
+
+            document.getElementById('formInterface').style.display = 'none';
+            document.getElementById('resultInterface').style.display = 'block';
+
+            let currentScore = 0;
+            const targetScore = 100; 
+
+            const counter = setInterval(() => {
+                if (currentScore < 90) {
+                    currentScore += Math.floor(Math.random() * 7) + 2;
+                    document.getElementById('scoreDisplay').innerText = currentScore + "%";
+                } else {
+                    currentScore++;
+                    if (currentScore > targetScore) currentScore = targetScore;
+                    document.getElementById('scoreDisplay').innerText = currentScore + "%";
+                    
+                    if (currentScore === targetScore) {
+                        clearInterval(counter);
+                        tampilkanHasilFinal(n1, n2);
+                    }
+                }
+            }, 40);
+        }
+
+        function tampilkanHasilFinal(nama1, nama2) {
+            document.getElementById('scoreDisplay').innerText = "100%";
+            document.getElementById('msgDisplay').innerHTML = `Skor kecocokan antara <b>${nama1}</b> dan <b>${nama2}</b> terdeteksi COCOK! <br>Takdir menyatakan kalian sangat cocok! 🥰✨`;
+            document.getElementById('waBtn').style.display = 'block';
+            setInterval(buatHatiTerbang, 200);
+        }
+
+        function buatHatiTerbang() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-particle');
+            const emots = ['❤️', '💖', '💕', '💘', '🌸'];
+            heart.innerText = emots[Math.floor(Math.random() * emots.length)];
+            heart.style.left = Math.random() * 100 + "vw";
+            heart.style.animationDuration = Math.random() * 2 + 2 + "s";
+            heart.style.fontSize = Math.random() * 15 + 15 + "px";
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 3000);
+        }
+
+        function kirimHasil() {
+            const pesan = encodeURIComponent("Aku udah tes masukin nama aku di Love Calculator yang kamu kasih, dan hasilnya ternyata 100% cocok. Memang kita gak bisa dipisahkan RAWR! ❤️🦖");
+            window.location.href = `https://wa.me/${nomorWA}?text=${pesan}`;
+        }
+    </script>
+
+</body>
+</html>
