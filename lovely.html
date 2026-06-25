@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>haii mommy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ==========================================================================
+           1. CSS RESET & GLOBAL COSMIC BACKGROUND
+           ========================================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #060814, #0b112c, #161233);
+            font-family: 'Poppins', sans-serif;
+            position: relative;
+        }
+
+        /* Kanvas untuk bintang-bintang berkedip */
+        #starCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Container konten utama di atas background */
+        .main-content {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 40px 20px;
+        }
+
+        /* ==========================================================================
+           2. SPOTIFY MUSIC PLAYER WIDGET STYLE
+           ========================================================================== */
+        .spotify-player {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 360px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            margin-top: 10px;
+        }
+
+        /* Tombol Play sirkular merah khas referensi */
+        .play-btn {
+            width: 44px;
+            height: 44px;
+            background: #ff3366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 51, 102, 0.5);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .play-btn:active {
+            transform: scale(0.9);
+        }
+
+        .play-btn svg {
+            fill: white;
+            width: 16px;
+            height: 16px;
+            margin-left: 2px; /* Penyelarasan visual ikon play */
+        }
+
+        .play-btn.playing svg {
+            margin-left: 0;
+        }
+
+        .music-info {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .dedicated-text {
+            color: #ff5e85;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .song-title {
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .artist-name {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+        /* Bar Durasi Musik */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .time-stamp {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 10px;
+            font-family: monospace;
+        }
+
+        .progress-bar-bg {
+            flex-grow: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            width: 70%; /* Mulai dari 0:02 detik sesuai foto */
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            transition: width 1s linear;
+        }
+
+        /* ==========================================================================
+           3. GIANT GLOWING HEART CENTERPIECE
+           ========================================================================== */
+        .center-heart-box {
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .giant-heart {
+            font-size: 90px;
+            filter: drop-shadow(0 0 25px rgba(255, 51, 102, 0.8));
+            animation: heartbeat 1.4s infinite cubic-bezier(0.25, 0.8, 0.25, 1);
+            user-select: none;
+            -webkit-user-select: none;
+            transition: transform 0.1s ease;
+        }
+
+        .center-heart-box:active .giant-heart {
+            transform: scale(0.85);
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 51, 102, 0.7)); }
+            30% { transform: scale(1.12); filter: drop-shadow(0 0 35px rgba(255, 51, 102, 1)); }
+            60% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(255, 51, 102, 0.7)); }
+        }
+
+        .tap-hint {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 11px;
+            margin-top: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: pulseText 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        /* ==========================================================================
+           4. FLOATING FLIRTING LYRICS BOXES (KAPSUL PESAN MELAYANG)
+           ========================================================================== */
+        .capsule-lyrics {
+            position: absolute;
+            background: rgba(18, 16, 36, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            border-radius: 50px;
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            z-index: 100;
+            animation: floatAndFade 4s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+
+        @keyframes floatAndFade {
+            0% {
+                transform: translate(-50%, -50%) scale(0.7);
+                opacity: 0;
+            }
+            15% {
+                transform: translate(var(--move-x), var(--move-y)) scale(1);
+                opacity: 1;
+            }
+            85% {
+                transform: translate(calc(var(--move-x) * 1.2), calc(var(--move-y) * 1.2)) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(calc(var(--move-x) * 1.3), calc(var(--move-y) * 1.3)) scale(0.8);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="starCanvas"></canvas>
+
+    <div class="main-content">
+        
+        <div class="spotify-player">
+            <div class="play-btn" id="spotifyPlayBtn" onclick="togglePlayMusic()">
+                <svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            <div class="music-info">
+                <span class="dedicated-text">musik yang mengingatkan ku padamu</span>
+                <span class="song-title">love</span>
+                <span class="artist-name">wave to earth</span>
+                
+                <div class="progress-container">
+                    <span class="time-stamp" id="timeCurrent">3:40</span>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="barFill"></div>
+                    </div>
+                    <span class="time-stamp">5:07</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="center-heart-box" onclick="spawnFlirtingText(event)">
+            <div class="giant-heart">❤️</div>
+            <div class="tap-hint">Tap Hatinya, Neii ✨</div>
+        </div>
+
+        <div style="color: rgba(255,255,255,0.15); font-size: 11px; letter-spacing: 1px;">
+            made with love for you
+        </div>
+
+    </div>
+
+    <script>
+        /* ==========================================================================
+           1. LOGIKA TWINKLING STARS BACKGROUND (CANVAS INTERACTIVE)
+           ========================================================================== */
+        const canvas = document.getElementById('starCanvas');
+        const ctx = canvas.getContext('2d');
+        let arrayBintang = [];
+
+        function aturUkuranLayar() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', aturUkuranLayar);
+        aturUkuranLayar();
+
+        // Membuat data koordinat bintang secara acak
+        for (let i = 0; i < 70; i++) {
+            arrayBintang.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                ukuran: Math.random() * 1.5 + 0.5,
+                kecepatanKedip: Math.random() * 0.03 + 0.01,
+                fase: Math.random() * Math.PI
+            });
+        }
+
+        function gambarBintang() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            arrayBintang.forEach(bintang => {
+                bintang.fase += bintang.kecepatanKedip;
+                let alfa = 0.2 + Math.abs(Math.sin(bintang.fase)) * 0.8;
+                
+                ctx.save();
+                ctx.fillStyle = `rgba(255, 255, 255, ${alfa})`;
+                ctx.shadowBlur = 4;
+                ctx.shadowColor = "#ffffff";
+                ctx.beginPath();
+                ctx.arc(bintang.x, bintang.y, bintang.ukuran, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+            requestAnimationFrame(gambarBintang);
+        }
+        gambarBintang();
+
+        /* ==========================================================================
+           2. LOGIKA INTERAKTIF SPOTIFY TIMING BAR
+           ========================================================================== */
+        let sedangBerputar = false;
+        let detikSekarang = 2; // Mulai dari 0:02 pas pemuatan awal
+        const totalDurasi = 504; // 1 menit 44 detik = 104 detik
+        let intervalMusik;
+
+        function togglePlayMusic() {
+            const btn = document.getElementById('spotifyPlayBtn');
+            const icon = document.getElementById('playIcon');
+            
+            sedangBerputar = !sedangBerputar;
+
+            if (sedangBerputar) {
+                btn.classList.add('playing');
+                // Ubah SVG ke ikon Pause
+                icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+                
+                // Jalankan hitungan detik durasi palsu biar super canggih
+                intervalMusik = setInterval(() => {
+                    if (detikSekarang < totalDurasi) {
+                        detikSekarang++;
+                        updateProgressBar();
+                    } else {
+                        clearInterval(intervalMusik);
+                    }
+                }, 1000);
+            } else {
+                btn.classList.remove('playing');
+                // Kembalikan ke ikon Play
+                icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+                clearInterval(intervalMusik);
+            }
+        }
+
+        function updateProgressBar() {
+            const menit = Math.floor(detikSekarang / 60);
+            const sisaDetik = detikSekarang % 60;
+            const formatDetik = sisaDetik < 10 ? '0' + sisaDetik : sisaDetik;
+            
+            document.getElementById('timeCurrent').innerText = `${menit}:${formatDetik}`;
+            
+            const persentaseFill = (detikSekarang / totalDurasi) * 100;
+            document.getElementById('barFill').style.width = persentaseFill + "%";
+        }
+
+        /* ==========================================================================
+           3. LOGIKA FLOATING FLIRTING LYRICS GENERATOR
+           ========================================================================== */
+        // Kalimat romantis ala lirik estetik / kata flirting
+        const kumpulanKataManis = [
+            "By your side, I'm happy 💖",
+            "Wleee",
+            "I love you more than words can say... ✨",
+            "Neii, you are my favorite song 🎵",
+            "Semesta itu luas, tapi hatiku cuma mau kamu 🌌",
+            "Inget ya, aku selalu sayang sama kamu 🥰",
+            "Haii mommy",
+            "With you, everything feels so right 💫",
+            "Kamu alasan aku ngoding hari ini 😊❤️"
+        ];
+
+        let indeksKata = 0;
+
+        function spawnFlirtingText(e) {
+            // Ambil text secara berurutan agar doi membaca semuanya
+            const teksPilihan = kumpulanKataManis[indeksKata];
+            indeksKata = (indeksKata + 1) % kumpulanKataManis.length;
+
+            const kapsul = document.createElement('div');
+            kapsul.classList.add('capsule-lyrics');
+            kapsul.innerText = teksPilihan;
+
+            // Memposisikan kapsul tepat di tengah titik koordinat hati
+            kapsul.style.left = '50%';
+            kapsul.style.top = '50%';
+
+            // Menghitung arah terbang acak (melebar diagonal seperti ledakan menyebar)
+            // Range pergerakan acak X (-140px s/d +140px), Y (-220px s/d +220px)
+            const acakX = (Math.random() - 0.5) * 280 + 'px';
+            const acakY = (Math.random() - 0.5) * 440 + 'px';
+            
+            kapsul.style.setProperty('--move-x', acakX);
+            kapsul.style.setProperty('--move-y', acakY);
+
+            // Tempel ke body dan hancurkan otomatis setelah 4 detik selesai animasi
+            document.body.appendChild(kapsul);
+            setTimeout(() => {
+                kapsul.remove();
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
