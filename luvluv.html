@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>True 3D Love Matrix - Nelli Elegant ✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000; /* Hitam pekat semesta */
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="loveCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('loveCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function sesuaikanLayar() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', sesuaikanLayar);
+        sesuaikanLayar();
+
+        const teksBucin = "I love you";
+        const namaPacar = "Nelli"; 
+        
+        // Pengaturan Rotasi & Aliran Teks
+        let sudutY = 0;              
+        const sudutX = 0.4;          
+        let aliranTeks = 0;          
+        
+        const jumlahTitik = 160;     
+
+        function render3DHeart() {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            sudutY += 0.013; 
+            aliranTeks -= 0.01;
+
+            const tengahX = canvas.width / 2;
+            const tengahY = canvas.height / 2;
+            const skalaHati = Math.min(canvas.width, canvas.height) / 38;
+
+            let kumpulanTitik = [];
+
+            // Urutan Projeksi 3D
+            for (let i = 0; i < jumlahTitik; i++) {
+                let t = (i / jumlahTitik) * Math.PI * 2 + aliranTeks;
+
+                let xDasar = 16 * Math.pow(Math.sin(t), 3);
+                let yDasar = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+                let zDasar = Math.sin(t * 2) * 3; 
+
+                let xRotasiY = xDasar * Math.cos(sudutY) - zDasar * Math.sin(sudutY);
+                let zRotasiY = xDasar * Math.sin(sudutY) + zDasar * Math.cos(sudutY);
+
+                let yRotasiX = yDasar * Math.cos(sudutX) - zRotasiY * Math.sin(sudutX);
+                let zFinal = yDasar * Math.sin(sudutX) + zRotasiY * Math.cos(sudutX);
+
+                kumpulanTitik.push({
+                    x: xRotasiY * skalaHati,
+                    y: yRotasiX * skalaHati,
+                    z: zFinal, 
+                    indeks: i
+                });
+            }
+
+            // Urutkan depth biar dapet efek 3D transparan tembus pandang
+            kumpulanTitik.sort((a, b) => a.z - b.z);
+
+            let namaSudahDigambar = false;
+
+            kumpulanTitik.forEach(titik => {
+                
+                // ==================================================================
+                // EMBEDDED CENTERPIECE (NAMA NELLI DI TENGAH LAPISAN 3D)
+                // ==================================================================
+                if (titik.z > 0 && !namaSudahDigambar) {
+                    ctx.save();
+                    ctx.translate(tengahX, tengahY);
+                    
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+
+                    // Efek berdenyut (pulsing) diperhalus
+                    let efekDenyut = 1 + Math.sin(sudutY * 2.5) * 0.06;
+                    
+                    // FIXED: Pembagi diubah ke 11 (sebelumnya 8) biar ukurannya lebih kecil & proporsional
+                    let ukuranNama = (Math.min(canvas.width, canvas.height) / 11) * efekDenyut;
+                    
+                    ctx.font = `${ukuranNama}px 'Great Vibes', cursive`;
+                    
+                    // FIXED: Diubah jadi Soft Pink Pastel transparan biar adem dan gak terlalu terang silau
+                    ctx.fillStyle = "rgba(255, 215, 230, 0.85)";
+                    
+                    // FIXED: Blur diturunkan ke 15 (sebelumnya 35) agar teksnya rapi dan gak lumer silau
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = "#ff4b91";
+
+                    ctx.fillText(namaPacar, 0, -5); 
+                    ctx.restore();
+                    namaSudahDigambar = true;
+                }
+
+                // Gambar barisan tulisan "I love you" pendukung
+                ctx.save();
+                ctx.translate(tengahX + titik.x, tengahY + titik.y);
+                ctx.rotate(-30 * Math.PI / 180);
+
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                let faktorKedalaman = (titik.z + 20) / 40; 
+                let ukuranFont = 9 + (faktorKedalaman * 5); 
+                ctx.font = `bold ${ukuranFont}px 'Arial', sans-serif`;
+
+                let kecerahanTeks = 40 + (faktorKedalaman * 45); 
+                let transparansi = 0.2 + (faktorKedalaman * 0.8); 
+                
+                ctx.fillStyle = `hsla(335, 100%, ${kecerahanTeks}%, ${transparansi})`;
+
+                if (titik.z > 0) {
+                    ctx.shadowBlur = 4;
+                    ctx.shadowColor = "#ff4b91";
+                } else {
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.fillText(teksBucin, 0, 0);
+                ctx.restore();
+            });
+
+            // Jalur aman darurat
+            if (!namaSudahDigambar) {
+                ctx.save();
+                ctx.translate(tengahX, tengahY);
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                let ukuranNama = Math.min(canvas.width, canvas.height) / 11;
+                ctx.font = `${ukuranNama}px 'Great Vibes', cursive`;
+                ctx.fillStyle = "rgba(255, 215, 230, 0.85)";
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "#ff4b91";
+                ctx.fillText(namaPacar, 0, -5);
+                ctx.restore();
+            }
+
+            requestAnimationFrame(render3DHeart);
+        }
+
+        render3DHeart();
+    </script>
+</body>
+</html>
