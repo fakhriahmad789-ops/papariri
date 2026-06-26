@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kue birthday</title>
+    <style>
+        /* --- RESET & BASE STYLES --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #5cb3a3;
+            font-family: 'Arial Rounded MT Bold', 'Helvetica Rounded', sans-serif;
+            overflow: hidden;
+            transition: background 2s cubic-bezier(0.25, 1, 0.5, 1);
+            perspective: 1000px;
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        /* Mode Gelap Sinematik */
+        .scene-dark {
+            background: radial-gradient(circle at center, #1a2624 0%, #050a09 100%) !important;
+        }
+
+        /* Tombol Start Lapisan Layar Penuh (Solusi Anti Gagal Klik di HP) */
+        .start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .click-hint {
+            color: #cbd5e1;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            animation: pulseHint 2s infinite ease-in-out;
+            user-select: none;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 12px 24px;
+            border-radius: 50px;
+        }
+
+        /* Wrapper Utama Posisi Cake dan Surat */
+        .main-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            transform: translateZ(0);
+        }
+
+        /* Container Utama Kue */
+        .cake-container {
+            position: relative;
+            width: 320px;
+            height: 260px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            will-change: transform;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .cake-container.shrink {
+            transform: scale(0.85) translateY(-20px);
+        }
+
+        /* Badan Kue Utama */
+        .cake-body {
+            position: relative;
+            width: 290px;
+            height: 125px;
+            background-color: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06), 0 5px 15px rgba(0,0,0,0.04);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        /* --- KRIM PINK (Dripping Effect) --- */
+        .frosting {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 55px;
+            z-index: 5;
+            transform: translateY(-100%);
+            transition: transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .frosting.show {
+            transform: translateY(0);
+        }
+
+        /* --- TEKS HBD OUR BABY (Pop In) --- */
+        .birthday-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 24px;
+            font-weight: 900;
+            display: flex;
+            justify-content: center;
+            gap: 2px;
+            user-select: none;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .birthday-text span {
+            display: inline-block;
+            transform: scale(0);
+            animation: popInText 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards,
+                       floatText 1.5s ease-in-out infinite alternate;
+        }
+
+        /* --- LILIN JATUH MEMBAL --- */
+        .candles-row {
+            position: absolute;
+            bottom: 123px;
+            display: flex;
+            justify-content: space-around;
+            width: 160px;
+            z-index: 1;
+            opacity: 0;
+            transform: translateY(-250px) scaleY(2);
+            transition: transform 1s cubic-bezier(0.175, 0.885, 0.42, 1.4), opacity 0.5s ease;
+        }
+
+        .candles-row.drop {
+            opacity: 1;
+            transform: translateY(0) scaleY(1);
+        }
+
+        .candle {
+            position: relative;
+            width: 15px;
+            height: 48px;
+            background: linear-gradient(to right, #ffffff 0%, #f1f5f9 40%, #e2e8f0 100%);
+            border-radius: 6px 6px 0 0;
+        }
+
+        .candle::before {
+            content: '';
+            position: absolute;
+            top: -7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 7px;
+            background-color: #475569;
+        }
+
+        /* --- API LILIN SINEMATIK --- */
+        .flame {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            width: 14px;
+            height: 22px;
+            background: radial-gradient(ellipse at bottom, #fffae0 20%, #ffbe0b 50%, #ff006e 100%);
+            border-radius: 50% 50% 20% 20%;
+            transform-origin: bottom center;
+        }
+
+        .flame.ignite {
+            transform: translateX(-50%) scale(1);
+            animation: fluidFlicker 0.2s ease-in-out infinite alternate;
+            box-shadow: 0 0 15px #ffbe0b, 0 0 30px #ff006e, 0 0 60px rgba(255, 0, 110, 0.4);
+        }
+
+        /* --- MUKA IMUT --- */
+        .face {
+            position: absolute;
+            width: 140px;
+            height: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            bottom: 35px;
+            opacity: 0;
+            transform: scale(0.7) translateY(15px);
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 4;
+        }
+
+        .face.show {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        .eye { width: 26px; height: 26px; }
+        .mouth { width: 22px; height: 12px; }
+
+        /* --- MEISES --- */
+        .sprinkles {
+            position: absolute;
+            bottom: 12px;
+            width: 85%;
+            height: 15px;
+            display: flex;
+            justify-content: space-around;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.6s ease;
+            z-index: 3;
+        }
+
+        .sprinkles.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .sprinkle {
+            width: 12px;
+            height: 5px;
+            border-radius: 3px;
+        }
+
+        /* =========================================
+           --- INTERACTIVE SURAT / ENVELOPE STYLES ---
+           ========================================= */
+        .envelope-wrapper {
+            position: relative;
+            width: 280px;
+            height: 160px;
+            background-color: #ff8fa3;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            cursor: pointer;
+            z-index: 20;
+            opacity: 0;
+            transform: translateY(100px) scale(0.8);
+            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        .envelope-wrapper.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 140px solid transparent;
+            border-right: 140px solid transparent;
+            border-top: 90px solid #ff758f;
+            border-radius: 12px 12px 0 0;
+            transform-origin: top center;
+            transition: transform 0.6s ease, z-index 0.2s step-end;
+            z-index: 13;
+        }
+
+        .envelope-pocket {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 140px solid #ffb3c1;
+            border-right: 140px solid #ffb3c1;
+            border-bottom: 80px solid #ffa4b6;
+            border-radius: 0 0 12px 12px;
+            z-index: 12;
+        }
+
+        .letter-card {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 250px;
+            height: 140px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 11;
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), height 0.8s ease, z-index 0.4s ease;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #475569;
+        }
+
+        .letter-card h3 {
+            font-size: 16px;
+            color: #ff477e;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .letter-card p {
+            font-size: 12px;
+            line-height: 1.6;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.5s ease 0.4s;
+        }
+
+        .heart-seal {
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            width: 30px;
+            height: 30px;
+            background-color: #ff0054;
+            border-radius: 3px;
+            z-index: 14;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            transition: opacity 0.4s ease;
+        }
+
+        .heart-seal::before, .heart-seal::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: #ff0054;
+            border-radius: 50%;
+        }
+        .heart-seal::before { top: -15px; left: 0; }
+        .heart-seal::after { left: -15px; top: 0; }
+
+        /* --- ANIMASI BUKA SURAT --- */
+        .envelope-wrapper.open .envelope-flap {
+            transform: rotateX(180deg);
+            z-index: 10;
+        }
+
+        .envelope-wrapper.open .heart-seal {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .envelope-wrapper.open .letter-card {
+            transform: translateY(-130px);
+            height: 250px;
+            z-index: 15;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.3);
+        }
+
+        .envelope-wrapper.open .letter-card p {
+            opacity: 1;
+        }
+
+        /* --- KEYFRAMES ANIMASI --- */
+        @keyframes popInText { to { transform: scale(1); } }
+        @keyframes floatText { 0% { transform: translateY(0); } 100% { transform: translateY(-6px); } }
+        @keyframes pulseHint { 0%, 100% { opacity: 0.3; transform: scale(0.96); } 50% { opacity: 1; transform: scale(1); } }
+        @keyframes fluidFlicker { 0% { transform: translateX(-50%) scale(1) rotate(-1.5deg); } 100% { transform: translateX(-50%) scale(1.06) rotate(1.5deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="start-overlay" id="startOverlay">
+        <div class="click-hint">KLIK DI SINI CA</div>
+    </div>
+
+    <div class="main-wrapper">
+        
+        <div class="cake-container" id="cakeContainer">
+            <div class="candles-row" id="candlesRow">
+                <div class="candle"><div class="flame"></div></div>
+                <div class="candle"><div class="flame"></div></div>
+                <div class="candle"><div class="flame"></div></div>
+            </div>
+
+            <div class="cake-body" id="cakeBody">
+                <div class="frosting" id="frosting">
+                    <svg viewBox="0 0 300 55" preserveAspectRatio="none" style="width: 100%; height: 100%;">
+                        <path d="M 0 0 L 300 0 L 300 28 
+                                 Q 285 48 270 28 Q 255 48 240 28 Q 225 48 210 28 Q 195 48 180 28 
+                                 Q 165 48 150 28 Q 135 48 120 28 Q 105 48 90 28 Q 75 48 60 28 
+                                 Q 45 48 30 28 Q 15 48 0 28 Z" fill="#ff7da0"/>
+                    </svg>
+                </div>
+
+                <div class="birthday-text" id="birthdayText"></div>
+
+                <div class="face" id="cakeFace">
+                    <div class="eye">
+                        <svg viewBox="0 0 24 24" id="eyeSquintL" style="display: block;"><path d="M18,7 L8,12 L18,17" stroke="#333" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <svg viewBox="0 0 24 24" id="eyeHappyL" style="display: none;"><circle cx="12" cy="12" r="9" fill="#333"/><circle cx="9" cy="9" r="2.5" fill="#fff"/></svg>
+                    </div>
+                    <div class="mouth" id="cakeMouth">
+                        <svg viewBox="0 0 24 24" id="mouthNormal" style="display: block;"><path d="M6,14 L18,14" stroke="#333" stroke-width="3.5" stroke-linecap="round"/></svg>
+                        <svg viewBox="0 0 24 24" id="mouthHappy" style="display: none;"><path d="M5,10 Q12,22 19,10" fill="#333" stroke="#333" stroke-width="2" stroke-linecap="round"/></svg>
+                    </div>
+                    <div class="eye">
+                        <svg viewBox="0 0 24 24" id="eyeSquintR" style="display: block;"><path d="M6,7 L16,12 L6,17" stroke="#333" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <svg viewBox="0 0 24 24" id="eyeHappyR" style="display: none;"><circle cx="12" cy="12" r="9" fill="#333"/><circle cx="9" cy="9" r="2.5" fill="#fff"/></svg>
+                    </div>
+                </div>
+
+                <div class="sprinkles" id="sprinkles">
+                    <div class="sprinkle" style="background-color: #ff6b8b; transform: rotate(15deg);"></div >
+                    <div class="sprinkle" style="background-color: #48cae4; transform: rotate(-20deg); margin-top: 5px;"></div>
+                    <div class="sprinkle" style="background-color: #ffb703; transform: rotate(30deg);"></div>
+                    <div class="sprinkle" style="background-color: #be76e2; transform: rotate(-10deg); margin-top: 3px;"></div>
+                    <div class="sprinkle" style="background-color: #5ee292; transform: rotate(25deg);"></div>
+                    <div class="sprinkle" style="background-color: #ff6b8b; transform: rotate(-15deg); margin-top: 4px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="envelope-wrapper" id="envelopeWrapper">
+            <div class="envelope-flap"></div>
+            <div class="heart-seal"></div>
+            <div class="letter-card">
+                <h3>Dear Our Baby</h3>
+                <p>
+                    Happy birthday anak kesayangan mami nelli
+                    <br><br>
+                    Selamat berjuang sukses - jokowi, Semoga tahun ini makin banyak dapet kejutan-kejutan seru, makin sehat, makin² dehh wkwk.
+                    <br><br>
+                    thank you ya berkat lu nih gue bisa deket dan balikan lagi sama mami
+                </p>
+            </div>
+            <div class="envelope-pocket"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // MENGGUNAKAN ES5 COMPLIANT CODE (DIJAMIN TIDAK ERROR DI WEBVIEW HP JADUL)
+        var isRunning = false;
+        var themeColors = ['#be76e2', '#5ee292', '#ff6b8b', '#48cae4', '#ffb703', '#ff85a1'];
+
+        // Menghubungkan trigger klik layar penuh
+        var startOverlay = document.getElementById('startOverlay');
+        if (startOverlay) {
+            startOverlay.onclick = startSequence;
+            startOverlay.addEventListener('touchstart', function(e) {
+                startSequence();
+            });
+        }
+
+        // Menghubungkan trigger klik surat
+        var envelopeWrapper = document.getElementById('envelopeWrapper');
+        if (envelopeWrapper) {
+            envelopeWrapper.onclick = openLetter;
+            envelopeWrapper.addEventListener('touchstart', function(e) {
+                if(e.stopPropagation) e.stopPropagation();
+                openLetter();
+            });
+        }
+
+        function startSequence() {
+            if (isRunning) return;
+            isRunning = true;
+
+            // Singkirkan tombol overlay
+            if (startOverlay && startOverlay.parentNode) {
+                startOverlay.parentNode.removeChild(startOverlay);
+            }
+
+            var textContainer = document.getElementById('birthdayText');
+            var fullText = "HBD OUR BABY!";
+            
+            // Loop ES5 untuk membuat teks pelangi bergantian
+            for (var i = 0; i < fullText.length; i++) {
+                var char = fullText.charAt(i);
+                var letter = document.createElement('span');
+                letter.textContent = char === " " ? "\u00A0" : char;
+                letter.style.color = themeColors[i % themeColors.length];
+                letter.style.animationDelay = (i * 0.04) + 's, ' + (0.5 + (i * 0.04)) + 's'; 
+                textContainer.appendChild(letter);
+            }
+
+            // Teks Menghilang & Meledak Jadi Confetti
+            setTimeout(function() {
+                createPremiumConfetti();
+                textContainer.style.opacity = '0';
+                textContainer.style.transform = 'scale(1.2)';
+            }, 2800);
+
+            // Muka imut muncul (>_ <)
+            setTimeout(function() {
+                document.getElementById('cakeFace').className = 'face show';
+            }, 3600);
+
+            // Krim cair & meises masuk mengubah jadi kue
+            setTimeout(function() {
+                document.getElementById('frosting').className = 'frosting show';
+                document.getElementById('sprinkles').className = 'sprinkles show';
+            }, 4600);
+
+            // Lilin terjatuh pas di atas kue
+            setTimeout(function() {
+                document.getElementById('candlesRow').className = 'candles-row drop';
+            }, 5800);
+
+            // Background meredup gulita, api menyala, ekspresi senang berbinar
+            setTimeout(function() {
+                document.body.className = 'scene-dark';
+                
+                var flames = document.querySelectorAll('.flame');
+                for (var j = 0; j < flames.length; j++) {
+                    (function(index) {
+                        setTimeout(function() {
+                            flames[index].className = 'flame ignite';
+                        }, index * 180);
+                    })(j);
+                }
+
+                document.getElementById('eyeSquintL').style.display = 'none';
+                document.getElementById('eyeSquintR').style.display = 'none';
+                document.getElementById('mouthNormal').style.display = 'none';
+                
+                document.getElementById('eyeHappyL').style.display = 'block';
+                document.getElementById('eyeHappyR').style.display = 'block';
+                document.getElementById('mouthHappy').style.display = 'block';
+            }, 7200);
+
+            // Surat romantis meluncur muncul di bawah kue
+            setTimeout(function() {
+                document.getElementById('cakeContainer').className = 'cake-container shrink';
+                document.getElementById('envelopeWrapper').className = 'envelope-wrapper show';
+            }, 9200);
+        }
+
+        function openLetter(event) {
+            if (event && event.stopPropagation) event.stopPropagation();
+            var envelope = document.getElementById('envelopeWrapper');
+            if (envelope.className.indexOf('open') !== -1) {
+                envelope.className = 'envelope-wrapper show';
+            } else {
+                envelope.className = 'envelope-wrapper show open';
+            }
+        }
+
+        // Engine Confetti Murni JS (Tanpa CSS Variable agar aman 100% di HP)
+        function createPremiumConfetti() {
+            var container = document.getElementById('cakeContainer');
+            var rect = container.getBoundingClientRect();
+            var startX = rect.width / 2;
+            var startY = rect.height - 30; 
+
+            for (var i = 0; i < 75; i++) {
+                var p = document.createElement('div');
+                p.style.position = 'absolute';
+                p.style.pointerEvents = 'none';
+                p.style.zIndex = '10';
+                
+                if (Math.random() > 0.5) p.style.borderRadius = '50%';
+                
+                p.style.backgroundColor = themeColors[Math.floor(Math.random() * themeColors.length)];
+                var size = Math.floor(Math.random() * 6) + 7;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = startX + 'px';
+                p.style.top = startY + 'px';
+
+                container.appendChild(p);
+
+                // Variabel Kalkulasi Fisika Parabola
+                var angle = Math.random() * Math.PI * 2;
+                var speed = Math.random() * 6 + 4;
+                var vx = Math.cos(angle) * speed;
+                var vy = Math.sin(angle) * speed - 3; 
+                var gravity = 0.2;
+                var rotation = 0;
+                var rotSpeed = Math.random() * 10 - 5;
+
+                // Loop Animasi Confetti Independen
+                (function(particle, velX, velY, rot) {
+                    var currentX = 0;
+                    var currentY = 0;
+                    var opacity = 1;
+                    
+                    var interval = setInterval(function() {
+                        velY += gravity;
+                        currentX += velX;
+                        currentY += velY;
+                        rot += rotSpeed;
+                        
+                        particle.style.transform = 'translate3d(' + currentX + 'px, ' + currentY + 'px, 0) rotate(' + rot + 'deg)';
+                        
+                        if (currentY > 150) {
+                            opacity -= 0.05;
+                            particle.style.opacity = opacity;
+                        }
+                        
+                        if (opacity <= 0 || currentY > 400) {
+                            clearInterval(interval);
+                            if (particle.parentNode) particle.parentNode.removeChild(particle);
+                        }
+                    }, 16);
+                })(p, vx, vy, rotation);
+            }
+        }
+    </script>
+</body>
+</html>
