@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>i love you</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050203;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* Latar Belakang Hujan Kata Hacker */
+        #matrix-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: none; /* Disembunyikan dulu di awal */
+        }
+
+        /* Canvas Utama Objek Hati */
+        #heart-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            display: none;
+        }
+
+        /* Container UI Terminal */
+        .container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            text-align: left;
+            width: 100%;
+            max-width: 420px;
+            padding: 25px;
+        }
+
+        .terminal-screen {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .system-text {
+            color: #ff3366;
+            text-shadow: 0 0 5px rgba(255, 51, 102, 0.4);
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        .status-text {
+            color: #00ff66;
+            text-shadow: 0 0 5px rgba(0, 255, 102, 0.4);
+            font-weight: bold;
+            min-height: 24px;
+        }
+
+        .info-text {
+            color: #ffffff;
+            opacity: 0.8;
+            font-style: italic;
+            margin-top: 10px;
+            margin-bottom: 30px;
+            min-height: 24px;
+        }
+
+        /* Efek Kursor Berkedip */
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            background-color: currentColor;
+            margin-left: 4px;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Tombol Decrypt */
+        .decrypt-btn {
+            background: transparent;
+            border: 1px solid #ff3366;
+            color: #ff3366;
+            padding: 12px 24px;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(255, 51, 102, 0.15);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .decrypt-btn.show {
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .decrypt-btn:hover {
+            background: #ff3366;
+            color: #050203;
+            box-shadow: 0 0 20px rgba(255, 51, 102, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="matrix-canvas"></canvas>
+
+    <div class="container" id="ui-container">
+        <div class="terminal-screen">
+            <p id="line1" class="system-text"></p>
+            <p id="line2" class="status-text"></p>
+            <p id="line3" class="info-text"></p>
+            <button class="decrypt-btn" id="decrypt-trigger">🔒 DECRYPT MESSAGE</button>
+        </div>
+    </div>
+
+    <canvas id="heart-canvas"></canvas>
+
+    <script>
+        // --- 1. ENGINE BACKGROUND (FLUID RANDOM WORD RAIN) ---
+        const mCanvas = document.getElementById('matrix-canvas');
+        const mCtx = mCanvas.getContext('2d');
+
+        function resizeMatrix() {
+            mCanvas.width = window.innerWidth;
+            mCanvas.height = window.innerHeight;
+        }
+        resizeMatrix();
+        window.addEventListener('resize', resizeMatrix);
+
+        const matrixWords = ["i", "love", "you"];
+        const mFontSize = 13;
+        const maxDrops = 55; 
+        let wordDrops = [];
+
+        for (let i = 0; i < maxDrops; i++) {
+            wordDrops.push({
+                x: Math.random() * mCanvas.width,
+                y: Math.random() * -mCanvas.height,
+                word: matrixWords[Math.floor(Math.random() * matrixWords.length)],
+                speed: Math.random() * 2 + 1.2,
+                opacity: Math.random() * 0.07 + 0.09 
+            });
+        }
+
+        function drawMatrix() {
+            mCtx.fillStyle = 'rgba(5, 2, 3, 0.07)';
+            mCtx.fillRect(0, 0, mCanvas.width, mCanvas.height);
+
+            mCtx.font = `bold ${mFontSize}px monospace`;
+
+            wordDrops.forEach(drop => {
+                mCtx.fillStyle = `rgba(230, 25, 75, ${drop.opacity})`;
+                mCtx.fillText(drop.word, drop.x, drop.y);
+
+                drop.y += drop.speed;
+
+                if (drop.y > mCanvas.height) {
+                    drop.y = Math.random() * -60 - 20; 
+                    drop.x = Math.random() * mCanvas.width; // Posisi diacak total saat respawn dari atas
+                    drop.word = matrixWords[Math.floor(Math.random() * matrixWords.length)];
+                    drop.speed = Math.random() * 2 + 1.2;
+                    drop.opacity = Math.random() * 0.07 + 0.09;
+                }
+            });
+        }
+
+
+        // --- 2. ENGINE TYPEWRITER TERMINAL ---
+        const txtLine1 = "[system] Initializing heart.PROTOCOL_v9.0 ...";
+        const txtLine2 = "[status] READY";
+        const txtLine3 = "> One encrypted package found for you.";
+
+        function typeEffect(elementId, text, speed, callback) {
+            const el = document.getElementById(elementId);
+            let index = 0;
+            
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            el.appendChild(cursor);
+
+            function typer() {
+                if (index < text.length) {
+                    cursor.insertAdjacentText('beforebegin', text.charAt(index));
+                    index++;
+                    setTimeout(typer, speed);
+                } else {
+                    cursor.remove();
+                    if (callback) callback();
+                }
+            }
+            typer();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                typeEffect('line1', txtLine1, 45, () => {
+                    setTimeout(() => {
+                        typeEffect('line2', txtLine2, 45, () => {
+                            setTimeout(() => {
+                                typeEffect('line3', txtLine3, 35, () => {
+                                    const btn = document.getElementById('decrypt-trigger');
+                                    btn.classList.add('show');
+                                });
+                            }, 300);
+                        });
+                    }, 400);
+                });
+            }, 600);
+        });
+
+
+        // --- 3. ENGINE OBJEK HATI UTAMA (FADE IN, GLOW & DIMMED) ---
+        const hCanvas = document.getElementById('heart-canvas');
+        const hCtx = hCanvas.getContext('2d');
+        const decryptTrigger = document.getElementById('decrypt-trigger');
+        const uiContainer = document.getElementById('ui-container');
+
+        function resizeHeartCanvas() {
+            hCanvas.width = window.innerWidth;
+            hCanvas.height = window.innerHeight;
+        }
+
+        class HeartTextParticle {
+            constructor(x, y, isOutline, delay) {
+                this.x = x;
+                this.y = y;
+                this.isOutline = isOutline;
+                this.fontSize = isOutline ? 10 : 9;
+                this.alpha = 0;
+                this.maxAlpha = isOutline ? 0.95 : 0.38; 
+                this.delay = delay; 
+                this.fadeSpeed = 0.025;
+            }
+
+            update(elapsed) {
+                if (elapsed < this.delay) return;
+                if (this.alpha < this.maxAlpha) {
+                    this.alpha += this.fadeSpeed;
+                }
+            }
+
+            draw(ctx, pulseScale) {
+                if (this.alpha === 0) return;
+
+                ctx.save();
+                
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                
+                const pX = centerX + (this.x - centerX) * pulseScale;
+                const pY = centerY + (this.y - centerY) * pulseScale;
+
+                ctx.font = `bold ${this.fontSize}px monospace`;
+                ctx.fillStyle = `rgba(255, 42, 95, ${this.alpha})`;
+                
+                if (this.isOutline) {
+                    ctx.shadowBlur = 6;
+                    ctx.shadowColor = "#ff2a5f";
+                } else {
+                    ctx.shadowBlur = 0;
+                }
+                
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                
+                ctx.fillText("i love you", pX, pY);
+                
+                ctx.restore();
+            }
+        }
+
+        let particles = [];
+        let animationStartTime = 0;
+
+        function initStaticHeartStructure() {
+            resizeHeartCanvas();
+            const centerX = hCanvas.width / 2;
+            const centerY = hCanvas.height / 2;
+            const scale = Math.min(hCanvas.width, hCanvas.height) / 29; 
+
+            const textWidth = 47; 
+            const textHeight = 11;
+
+            function checkOverlap(x, y) {
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    if (Math.abs(x - p.x) < textWidth && Math.abs(y - p.y) < textHeight) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Garis Tepi Luar (Neon Glow)
+            for (let i = 0; i < 1800; i++) {
+                const t = Math.random() * Math.PI * 2;
+                const r = 0.96 + Math.random() * 0.06;
+
+                let x = 16 * Math.pow(Math.sin(t), 3) * scale * r;
+                let y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * scale * r;
+
+                const finalX = centerX + x;
+                const finalY = centerY + y;
+
+                if (!checkOverlap(finalX, finalY)) {
+                    const randomDelay = Math.random() * 3000;
+                    particles.push(new HeartTextParticle(finalX, finalY, true, randomDelay));
+                }
+            }
+
+            // Bagian Dalam (Redup)
+            for (let i = 0; i < 2200; i++) {
+                const t = Math.random() * Math.PI * 2;
+                const r = Math.random() * 0.90;
+
+                let x = 16 * Math.pow(Math.sin(t), 3) * scale * r;
+                let y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * scale * r;
+
+                const finalX = centerX + x;
+                const finalY = centerY + y;
+
+                if (!checkOverlap(finalX, finalY)) {
+                    const randomDelay = Math.random() * 3000;
+                    particles.push(new HeartTextParticle(finalX, finalY, false, randomDelay));
+                }
+            }
+        }
+
+        function loopAnimation() {
+            hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+            const elapsed = Date.now() - animationStartTime;
+
+            const pulseScale = 1 + Math.sin(elapsed * 0.0035) * 0.018;
+
+            particles.forEach(p => {
+                p.update(elapsed);
+                p.draw(hCtx, pulseScale);
+            });
+
+            requestAnimationFrame(loopAnimation);
+        }
+
+        // --- MANIPULASI TRIGER UTAMA SAAT KLIK ---
+        decryptTrigger.addEventListener('click', () => {
+            uiContainer.style.display = 'none';
+            
+            // 1. Tampilkan dan aktifkan Loop Hujan Hacker Latar Belakang
+            mCanvas.style.display = 'block';
+            setInterval(drawMatrix, 35); 
+            
+            // 2. Tampilkan dan jalankan Loop Formasi Objek Hati
+            hCanvas.style.display = 'block';
+            initStaticHeartStructure();
+            animationStartTime = Date.now();
+            
+            requestAnimationFrame(loopAnimation);
+        });
+
+        window.addEventListener('resize', () => {
+            if(particles.length > 0) resizeHeartCanvas();
+        });
+    </script>
+</body>
+</html>
